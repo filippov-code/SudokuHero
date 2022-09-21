@@ -29,13 +29,16 @@ for(int i = 0; i < size; i++)
 //3x3 with deadlock
 //string values = "a a 8 a a 9 a 5 a a 4 a a a 1 8 a a a a a a a a 3 a 4 a a 2 7 a a a 1 a a a 4 3 a a a a a a 5 a 6 a a a 3 7 a a a a a a a a a 6 a a 1 a a a 8 a a a 5 a a 2 a 7 a";
 //test
-string values = "a a a a a a a a a a 1 a a 3 6 a a a a a a 8 a a a 1 2 a a 1 6 a a 9 7 8 a a a a 7 a a a a a a 5 a a a a 2 4 a a a a a 7 a 4 a a 6 9 a 5 a 1 a a 3 a a a a a a a a";
+//string values = "a a a a a a a a a a 1 a a 3 6 a a a a a a 8 a a a 1 2 a a 1 6 a a 9 7 8 a a a a 7 a a a a a a 5 a a a a 2 4 a a a a a 7 a 4 a a 6 9 a 5 a 1 a a 3 a a a a a a a a";
 
 //medium
 //string values = "a 8 a 2 5 a a 9 a a 5 a 6 1 3 8 7 2 a a a 9 a 4 a 1 a 5 a 7 a a a a 6 a 9 a a a a a 2 a 1 a a 4 a a a a a a 1 a a 3 7 a 9 a a a a 8 a a a 3 4 a 6 7 a a a a a a a";
 
 //hard <- target
+string values = "a a a 5 a a a a 1 a 8 a a a a a a a 9 3 a a a 4 5 a a 2 9 a a 3 a a a 7 a a 8 a a a 9 a a a a 1 a a 2 a a a 4 5 a a a 3 1 a a a a a a 7 a a 6 a a a 2 a a a a a a";
+//
 //string values = "a 4 a a a a 3 a a a a a 3 2 a a a a 8 6 a 1 a a 4 a a a a 8 a a a a a a a a 2 a 5 8 9 7 a a a a a a a a 3 a a a a a a a a a 3 a 2 a 4 a a 1 9 a a a 9 8 1 5 6 a a";
+
 
 //from lection
 //string values = "o o o e o e 6 e o e e e o o e o 9 o o o e 5 e o e e 7 o e o e 3 e o o 8 e o e 1 5 o e e o e o o e e o 5 2 9 4 e 5 o 2 o o o e o e 2 e o o o o e o 3 o o e 6 e o e";
@@ -51,23 +54,22 @@ string values = "a a a a a a a a a a 1 a a 3 6 a a a a a a 8 a a a 1 2 a a 1 6 a
 //string[] values = "a 2 a 3 6 a a a 8 8 7 4 a 2 a 6 a a a 3 a a 8 4 a a 2 2 a a 8 a a 4 1 3 4 1 a 7 a 2 a a 6 a a 6 a 3 a a 3 a a 4 1 a 7 3 a 8 a 7 a 2 5 a a a 6 a a a a 2 a 9 1 5 a";
 //string[] values = string.Join(" ", valuesList).Split(" ");
 Sudoku sudoku = new Sudoku(blockWidth, blockHeight, values);
-sudoku.Show();
+//sudoku.Show();
 Stopwatch watch = new Stopwatch();
 watch.Start();
 
-while(sudoku.MethodRemovingValuesFromVariants())
-{
-
-}
-sudoku.Show();
-sudoku.MethodRemovingVariantsFromVariants();
-sudoku.Show();
-sudoku.MethodRemovingValuesFromVariants();
-sudoku.Show();
-Console.WriteLine(Sudoku.matrixs);
+Console.WriteLine("Решаем...");
+sudoku.StartSolving();
 
 watch.Stop();
-Console.WriteLine("Решаем...");
+//sudoku.MethodRemovingValuesFromVariants();
+//sudoku.Show();
+
+//sudoku.TestColumns();
+//sudoku.Show();
+//sudoku.MethodRemovingValuesFromVariants();
+//sudoku.Show();
+
 //Console.WriteLine(sudoku.GetWorstSolutionTime());
 //long sum = 0;
 //int count = 100000;
@@ -83,13 +85,19 @@ Console.WriteLine("Решаем...");
 //Console.WriteLine("Среднее: " + sum / (float)count);
 if (Sudoku.Solve != null)
 {
-    //Console.WriteLine($"Решено за {Math.Round(watch.ElapsedMilliseconds/1000f, 4)} секунды");
     Sudoku.Solve.Show();
+    Console.ForegroundColor = ConsoleColor.Green;
+    Console.WriteLine($"Решено за {Math.Round(watch.ElapsedMilliseconds/1000f, 4)} секунды");
 }
 else
 {
+    Console.ForegroundColor = ConsoleColor.Red;
+    Console.WriteLine($"Не получилось решить. Потрачено: {Math.Round(watch.ElapsedMilliseconds / 1000f, 4)}");
     Console.WriteLine(":(");
 }
+Console.ResetColor();
+Console.WriteLine($"Создано {Sudoku.matrixs} матриц");
+Console.WriteLine("\u2011\u2011\u2011+\u2011\u2011\u2011+\u2011\u2011\u2011");
 
 //for (int i = 0; i < 100; i++)
 //{
@@ -187,7 +195,7 @@ class Sudoku
             Solve ??= this;
             return true;
         }
-        if (!IsSolvable()) return false;
+        if (!IsNoVoids()) return false;
 
         while (ExcecuteStep())
         {
@@ -195,45 +203,60 @@ class Sudoku
 
         //deadlock
         if (IsSolved())
-            {
+        {
             //Console.WriteLine("Решено");
             Solve ??= this;
             return true;
-            }
-            else if (!IsSolvable())
+        }
+        else if (!IsNoVoids())
+        {
+            //Console.WriteLine("Испорчено");
+            return false;
+        }
+        else if (IsFilled())
+        {
+            //Console.WriteLine("Решено не верно");
+            return false;
+        }
+        else
+        {
+            int smallestRowIndex = Size;
+            int smallestColIndex = Size;
+            int smallestLength = Size + 1;
+            for (int i = 0; i < Size; i++)
             {
-                //Console.WriteLine("Не решаемо");
-                return false;
-            }
-            else
-            {
-                for (int i = 0; i < Size; i++)
+                for (int j = 0; j < Size; j++)
                 {
-                    for (int j = 0; j < Size; j++)
+                    int length = Matrix[i][j].Count;
+                    if (length > 1 && length < smallestLength)
                     {
-                        if (Matrix[i][j].Count > 1)
-                        {
-
-                        //Console.WriteLine("Клоны");
-                        for (int k = 0; k < Matrix[i][j].Count; k++)
-                            {
-                                Sudoku sudokuClone = new Sudoku(BlocksWidth, BlocksHeight, GetValuesString());
-                                sudokuClone.Matrix[i][j] = new List<int> { Matrix[i][j][k] };
-                            //sudokuClone.Show();
-                                bool solved = sudokuClone.StartSolving();
-                                if (solved)
-                                {
-                                Solve ??= sudokuClone;
-                                //sudokuClone.Show();
-                                //Console.ReadLine();
-                                    return true;
-                                }
-                            }
-                        }
-                    //Console.WriteLine("Конец клонов");
+                        //if (length == 0) throw new Exception();
+                        smallestRowIndex = i;
+                        smallestColIndex = j;
+                        smallestLength = length;
                     }
                 }
             }
+            //if (smallestLength == Size + 1)
+            //{
+            //    Show();
+            //    throw new Exception();
+            //}
+            for (int k = 0; k < Matrix[smallestRowIndex][smallestColIndex].Count; k++)
+            {
+                Sudoku sudokuClone = new Sudoku(BlocksWidth, BlocksHeight, GetValuesString());
+                sudokuClone.Matrix[smallestRowIndex][smallestColIndex] = new List<int> { Matrix[smallestRowIndex][smallestColIndex][k] };
+                //sudokuClone.Show();
+                bool solved = sudokuClone.StartSolving();
+                if (solved)
+                {
+                    Solve ??= sudokuClone;
+                    //sudokuClone.Show();
+                    //Console.ReadLine();
+                    return true;
+                }
+            }
+    }
 
         return false;
     }
@@ -242,7 +265,10 @@ class Sudoku
     {
         bool matrixHasBeenChanged = false;
 
-        //matrixHasBeenChanged |= MethodRemovingValuesFromVariants();
+        matrixHasBeenChanged |= MethodRemovingValuesFromVariants();
+        if (matrixHasBeenChanged)
+            return true;
+
         //matrixHasBeenChanged |= MethodRemovingVariantsFromVariants();
 
         return matrixHasBeenChanged;
@@ -250,6 +276,7 @@ class Sudoku
 
     public bool MethodRemovingValuesFromVariants()
     {
+        //Show();
         bool matrixHasBeenChanged = false;
         for (int i = 0; i < Size; i++)
         {
@@ -283,8 +310,48 @@ class Sudoku
         }
         //Show();
 
-        if (!IsSolvable()) return false;
+        if (!IsNoVoids())
+        {
+            //Show();
+            //throw new Exception();
+            return false;
+        }
         return matrixHasBeenChanged;
+    }
+
+    public void TestColumns()
+    {
+        for (int j = 0; j < Size; j++)
+        {
+            for (int i = 0; i < Size; i++)
+            {
+                //Console.Write($"{i},{j}: ({string.Join(",", Matrix[i][j])}) ");
+                if (Matrix[i][j].Count == 1)
+                {
+                    //Console.WriteLine("Пропуск");
+                    continue;
+                }
+
+                var variantsInCol = GetVariantsFromColumn(j, i);
+                //Console.Write($"[{string.Join(",", variantsInCol)}]");
+                //Console.Write($"Строка {i} Элемент {j}:({string.Join(",", Matrix)}) varsInRow: ({string.Join(",", variantsInRow)}) ");
+                //ShowColumn(j);
+                var result = Matrix[i][j].Except(variantsInCol);
+                //Console.Write($"->({string.Join(",", result)})");
+                //Console
+                if (result.Count() == 1)
+                {
+                    Matrix[i][j] = result.ToList();
+                    //RemoveValuesFromVariantsInColumn(j);
+                    //RemoveValuesFromVariantsInBlock(rowMinIndex, rowMaxIndex, colMinIndex, colMaxIndex);
+                    //Console.WriteLine($"= ({string.Join(",", Matrix[i][j])})");
+                    i = -1;
+                    continue;
+                }
+                //Console.WriteLine($"= ({string.Join(",", Matrix[i][j])})");
+
+            }
+        }
     }
 
     public bool MethodRemovingVariantsFromVariants()
@@ -302,7 +369,7 @@ class Sudoku
                 }
 
                 var variantsInRow = GetVariantsFromRow(i, j);
-                //Console.Write($"Строка {i} Элемент {j}:({string.Join(",", Matrix)}) varsInRow: ({string.Join(",", variantsInRow)}) ");
+                //Console.Write($"Строка {i} Элемент {j}:({string.Join(",", Matrix[i][j])}) varsInRow: ({string.Join(",", variantsInRow)}) ");
                 var result = Matrix[i][j].Except(variantsInRow);
                 //Console
                 if (result.Count() == 1)
@@ -319,29 +386,44 @@ class Sudoku
                 
             }
         }
-        for (int i = 0; i < Size; i++)
+
+        if (matrixHasBeenChanged)
+            MethodRemovingValuesFromVariants();
+
+        for (int j = 0; j < Size; j++)
         {
-            for (int j = 0; j < Size; j++)
+            for (int i = 0; i < Size; i++)
             {
-                //Console.WriteLine("j:" + j);
-                if (Matrix[j][i].Count == 1)
+                //Console.Write($"{i},{j}: ({string.Join(",", Matrix[i][j])}) ");
+                if (Matrix[i][j].Count == 1)
                 {
+                    //Console.WriteLine("Пропуск");
                     continue;
                 }
 
                 var variantsInCol = GetVariantsFromColumn(j, i);
-                var result = Matrix[j][i].Except(variantsInCol);
+                //Console.Write($"[{string.Join(",", variantsInCol)}]");
+                //Console.Write($"Строка {i} Элемент {j}:({string.Join(",", Matrix)}) varsInRow: ({string.Join(",", variantsInRow)}) ");
+                //ShowColumn(j);
+                var result = Matrix[i][j].Except(variantsInCol);
+                //Console.Write($"->({string.Join(",", result)})");
+                //Console
                 if (result.Count() == 1)
                 {
-                    Matrix[j][i] = result.ToList();
-                    j = -1;
-
+                    Matrix[i][j] = result.ToList();
+                    //RemoveValuesFromVariantsInColumn(j);
+                    //RemoveValuesFromVariantsInBlock(rowMinIndex, rowMaxIndex, colMinIndex, colMaxIndex);
+                    //Console.WriteLine($"= ({string.Join(",", Matrix[i][j])})");
+                    i = -1;
                     matrixHasBeenChanged = true;
                     continue;
                 }
+                //Console.WriteLine($"= ({string.Join(",", Matrix[i][j])})");
 
             }
         }
+        if (matrixHasBeenChanged)
+            MethodRemovingValuesFromVariants();
 
         return matrixHasBeenChanged;
 
@@ -425,7 +507,7 @@ class Sudoku
             //if (!IsSolvable()) throw new Exception();
             bool elementHasBeenChanged = variantsBeforeEdit != Matrix[rowIndex][i].Count;
             rowHasBeenEdit |= elementHasBeenChanged;
-            if (elementHasBeenChanged) Console.WriteLine($"({string.Join(",", vars)})->({string.Join(",", Matrix[rowIndex][i])})[{string.Join(",", correctValues)}]");
+            //if (elementHasBeenChanged) Console.WriteLine($"({string.Join(",", vars)})->({string.Join(",", Matrix[rowIndex][i])})[{string.Join(",", correctValues)}]");
             //Console.Write($"({string.Join(",", Matrix[rowIndex][i])})[{string.Join(",", correctValues)}]");
             //Console.WriteLine();
         }
@@ -495,7 +577,7 @@ class Sudoku
             //if (!IsSolvable()) throw new Exception();
             bool elementHasBeenChanged = variantsBeforeEdit != Matrix[i][colIndex].Count;
             colHasBeenEdit |= elementHasBeenChanged;
-            if (elementHasBeenChanged) Console.WriteLine($"({string.Join(",", vars)})->({string.Join(",", Matrix[i][colIndex])})[{string.Join(",", correctValues)}]");
+            //if (elementHasBeenChanged) Console.WriteLine($"({string.Join(",", vars)})->({string.Join(",", Matrix[i][colIndex])})[{string.Join(",", correctValues)}]");
             //Console.Write($"({string.Join(",", Matrix[i][colIndex])})[{string.Join(",", correctValues)}]");
             //Console.WriteLine();
         }
@@ -570,7 +652,7 @@ class Sudoku
                 bool elementHasBeenChanged = variantsBeforeEdit != Matrix[i][j].Count;
                 //if (!IsSolvable()) throw new Exception();
                 blockHasBeenEdit |= elementHasBeenChanged;
-                if (elementHasBeenChanged) Console.WriteLine($"({string.Join(",", vars)})->({string.Join(",", Matrix[i][j])})[{string.Join(",", correctValues)}]");
+                //if (elementHasBeenChanged) Console.WriteLine($"({string.Join(",", vars)})->({string.Join(",", Matrix[i][j])})[{string.Join(",", correctValues)}]");
                 //Console.WriteLine($"->({string.Join(",", Matrix[i][j])})");
             }
         }
@@ -625,7 +707,7 @@ class Sudoku
     #endregion
     
     private bool SelectValuesFromVariants(int rowMinIndex, int rowMaxIndex, int colMinIndex, int colMaxIndex)
-    {
+    {/////////////////
         //Console.WriteLine("SVFV");
         bool blockHasBeenChanged = false;
         for (int i = rowMinIndex; i <= rowMaxIndex; i++)
@@ -747,13 +829,26 @@ class Sudoku
         return true;
     }
 
-    public bool IsSolvable()
+    public bool IsNoVoids()
     {
         for (int i = 0; i < Size; i++)
         {
             for (int j = 0; j < Size; j++)
             {
                 if (Matrix[i][j].Count == 0)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    public bool IsFilled()
+    {
+        for (int i = 0; i < Size; i++)
+        {
+            for (int j = 0; j < Size; j++)
+            {
+                if (Matrix[i][j].Count != 1)
                     return false;
             }
         }

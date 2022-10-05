@@ -24,11 +24,17 @@ for(int i = 0; i < size; i++)
     stillBe -= size;
 }
 string values = string.Join(" ", valuesList);
+Console.WriteLine("Введите опции");
+string options = Console.ReadLine();
 //pattern
 //string values = "a 7 a a 3 a a a 8 a a a 4 a a a 6 a a a 4 a 9 a 5 a 3 a 5 2 a 6 a a a a a a a a a a a a 9 4 a a a a 8 a a 2 a 9 a 2 5 a 7 a a a a 3 9 4 a a a a a a 6 a a a 9 a a";
+//X easy
+//string values = "a a 7 1 a 4 a 5 a a a a 6 3 a a 1 8 1 9 6 7 a a a 3 a a a a a a a a a 9 7 2 9 a a a 3 a 1 5 a a 3 9 1 a a 2 a 4 5 9 1 7 8 2 3 8 a 2 a a a 1 a a 9 3 1 8 a 2 a 4 a";
+//X master
+//string values = "a 5 a a a a a a a a a a a 8 a a 4 5 a a a 3 5 a a a 9 a a a a a a 5 a a a a a 1 9 a a a a a a a a a a 6 a 8 9 2 3 a a a 4 a a 1 7 a 5 a a 9 a a a a 6 a 1 2 8 7 3";
+//string values = "a 7 a a a a a a a 6 a a 4 a 9 a 8 a a a a 6 3 a a 5 a a a a a 6 a a a a a a a a a a a 1 a a a a 9 a a a 2 a a a a a a 6 a 4 2 a 2 a 1 9 3 a 6 a a 1 6 8 a 2 7 a 9";
 
-
-Sudoku sudoku = new Sudoku(blockWidth, blockHeight, values);
+Sudoku sudoku = new Sudoku(blockWidth, blockHeight, values, options);
 Stopwatch watch = new Stopwatch();
 watch.Start();
 
@@ -62,9 +68,13 @@ class Sudoku
     public readonly int BlocksHeight;
     public readonly List<int>[][] Matrix;
     public static Sudoku Solve;
+    private readonly string[] options;
+    //public readonly bool IsXSudoku;
+    public readonly bool IsXMainSudoku;
+    public readonly bool IsXSideSudoku;
 
 
-    public Sudoku(int blocksWidth, int blocksHeigth, string valuesString)
+    public Sudoku(int blocksWidth, int blocksHeigth, string valuesString, string optionsString)
     {
         Size = blocksHeigth * blocksWidth;
         CountBlocksInColumn = blocksWidth;
@@ -78,12 +88,29 @@ class Sudoku
         for (int i = 0; i < Size; i++)
         {
             Matrix[i] = new List<int>[Size];
-            for(int j = 0; j < Size; j++)
+            for (int j = 0; j < Size; j++)
             {
                 Matrix[i][j] = GetVariantsFromString(values[i * Size + j]);
             }
         }
         PlusMatrixsCounter();
+        options = optionsString.Split(" ");
+        foreach (var option in options)
+        {
+            if (option == "X")
+            {
+                IsXMainSudoku = true;
+                IsXSideSudoku = true;
+            }
+            else if (option == "X0")
+            {
+                IsXMainSudoku = true;
+            }
+            else if (option == "X1")
+            {
+                IsXSideSudoku = true;
+            }
+        }
     }
 
     private List<int> GetVariantsFromString(string parameter)
@@ -147,11 +174,13 @@ class Sudoku
         }
         else if (!IsNoVoids())
         {
+            //Show();
             //Console.WriteLine("Испорчено");
             return false;
         }
         else if (IsFilled())
         {
+            //Show();
             //Console.WriteLine("Решено не верно");
             return false;
         }
@@ -176,7 +205,7 @@ class Sudoku
             }
             for (int k = 0; k < Matrix[smallestRowIndex][smallestColIndex].Count; k++)
             {
-                Sudoku sudokuClone = new Sudoku(BlocksWidth, BlocksHeight, GetValuesString());
+                Sudoku sudokuClone = new Sudoku(BlocksWidth, BlocksHeight, GetValuesString(), string.Join(" ", options));
                 sudokuClone.Matrix[smallestRowIndex][smallestColIndex] = new List<int> { Matrix[smallestRowIndex][smallestColIndex][k] };
                 //sudokuClone.Show();
                 bool solved = sudokuClone.StartSolving();
@@ -239,6 +268,14 @@ class Sudoku
                 //matrixHasBeenEdit |= SelectValuesFromVariants(rowMinIndex, rowMaxIndex, colMinIndex, colMaxIndex);
                 //if (!IsSolvable()) throw new Exception();
             }
+        }
+        if (IsXMainSudoku)
+        {
+            matrixHasBeenChanged |= RemoveValuesFromVariantsInDiagonal(0);
+        }
+        if (IsXSideSudoku)
+        {
+            matrixHasBeenChanged |= RemoveValuesFromVariantsInDiagonal(1);
         }
         //Show();
 
@@ -546,7 +583,51 @@ class Sudoku
     }
 
     #endregion
-  
+
+    #region RemoveValuesFromVariantsInDiagonals
+    private bool RemoveValuesFromVariantsInDiagonal(int diagonalIndex)
+    {
+        bool diagonalHasBeenChanged = false;
+
+        for (int i = 0; i < Size; i++)
+        {
+            int colIndex = diagonalIndex == 1 ? Size-i-1: i;
+            if (Matrix[i][colIndex].Count == 1)
+            {
+                continue;
+            }
+
+            List<int> correctValues = GetValuesFromDiagonal(diagonalIndex);
+            int variantsBeforeEdit = Matrix[i][colIndex].Count;
+            Matrix[i][colIndex] = Matrix[i][colIndex].Except(correctValues).ToList();
+            bool elementHasBeenChanged = variantsBeforeEdit != Matrix[i][colIndex].Count;
+            diagonalHasBeenChanged |= elementHasBeenChanged;
+        }
+
+        return diagonalHasBeenChanged;
+    }
+
+    private List<int> GetValuesFromDiagonal(int diagonalIndex)
+    {
+        List<int> result = new();
+        for (int i = 0; i < Size; i++)
+        {
+            int colIndex = diagonalIndex == 1 ? Size - i - 1 : i;
+            if (Matrix[i][colIndex].Count == 1)
+            {
+                result.Add(Matrix[i][colIndex][0]);
+            }
+        }
+        return result;
+    }
+       
+    private void ShowDiagonal(int i)
+    {
+
+    }
+
+    #endregion
+
     public bool IsSolved()
     {
         for (int i = 0; i < Size; i++)
@@ -572,6 +653,15 @@ class Sudoku
                 if (GetValuesFromBlock(rowMinIndex, rowMaxIndex, colMinIndex, colMaxIndex).Distinct().Count() != Size)
                     return false;
             }
+        }
+
+        if (IsXMainSudoku)
+        {
+            if (GetValuesFromDiagonal(0).Distinct().Count() != Size) return false;
+        }
+        if (IsXSideSudoku)
+        {
+            if (GetValuesFromDiagonal(1).Distinct().Count() != Size) return false;
         }
 
         return true;

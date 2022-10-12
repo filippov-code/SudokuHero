@@ -16,7 +16,7 @@ int size = blockWidth * blockHeight;
 
 List<string> valuesList = new();
 Console.WriteLine($"Введите значения построчно через пробел (по {size} значений):");
-int stillBe = size*size;
+int stillBe = size * size;
 for(int i = 0; i < size; i++)
 {
     Console.WriteLine($"Осталось еще {stillBe} значений ({stillBe/size} строк)");

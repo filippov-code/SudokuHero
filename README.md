@@ -3,7 +3,7 @@
 Программа умеет решать 3 типа судоку:
 + Классическое
 + Чет-Нечет
-+ Судоку-X  
++ Судоку-X
 ![](https://github.com/filippov-code/SudokuHero/blob/master/screenshots/1.png)
 
 ## Инструкция

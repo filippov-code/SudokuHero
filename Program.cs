@@ -19,7 +19,7 @@ Console.WriteLine($"Введите значения построчно чере�
 int stillBe = size * size;
 for(int i = 0; i < size; i++)
 {
-    Console.WriteLine($"Осталось еще {stillBe} значений ({stillBe/size} строк)");
+    //Console.WriteLine($"Осталось еще {stillBe} значений ({stillBe/size} строк)");
     valuesList.Add(Console.ReadLine());
     stillBe -= size;
 }
